@@ -152,7 +152,7 @@ export default function HomePage() {
         </section></div>
       </div>
 
-      {/* CHAPTER 3 - FAILURE & REPAIR */}
+      {/*FAILURE & REPAIR (chp-3) */}
 
       {mode === "repair" && hasRunRepair && (
         <FailureRepairPanel
