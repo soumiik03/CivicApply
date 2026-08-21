@@ -1,147 +1,285 @@
-# CivicApply — Autonomous Civic Workflow & Self-Healing Agent
+# CivicApply
 
-> Autonomous form completion engine that learns, reuses, and self-heals repetitive student internship and civic application workflows.
+> **A self-healing browser agent that learns a workflow once, and keeps it working even after the website changes.**
 
----
+Built for **SLAB — Self-Learning Agent Browser Hackathon** with **webcmd**, Playwright, Next.js, and TypeScript.
 
-## 🌟 Overview
-
-CivicApply automates tedious multi-stage application forms on civic portals (such as `internship.okcl.org`) using headless browser orchestration. When portal UI selectors change or drift over time, CivicApply's deterministic heuristic DOM inspection engine detects failures, scores candidate elements, repairs the workflow dynamically, and persists the updated selector map as a new learned version.
-
----
-
-## 🚀 Key Features
-
-- **Autonomous Workflow Execution**: Populates complex demographic, geolocation, and educational fields via headless browser automation.
-- **Pre-Submission Safety Boundary**: Automatically halts prior to final submission or irreversible document actions, ensuring safe, human-reviewed operations.
-- **Self-Healing DOM Repair**: Introspects live DOM elements upon selector mismatch, scores candidate replacements based on field intent, and auto-repairs the workflow in real-time.
-- **Metadata Persistence & Versioning**: Automatically version-tracks and persists learned selector mappings (`v1 ➔ v2 ➔ vN`) for subsequent reuse.
-- **Human-Centric Dashboard**: A clean Next.js dashboard providing real-time execution status, student profile review, selector diff visualizer, and raw technical diagnostics.
+[![Next.js](https://img.shields.io/badge/Next.js-black?logo=next.js)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Playwright](https://img.shields.io/badge/Playwright-2EAD33?logo=playwright&logoColor=white)](https://playwright.dev/)
+[![webcmd](https://img.shields.io/badge/Powered%20by-webcmd-6C47FF)](#)
 
 ---
 
-## 🛠️ Architecture & Flow
+## The Problem
 
-```
-Student Profile (student.json)
-       │
-       ▼
-Workflow Definition (internship-workflow.json)
-       │
-       ▼
-Browser Script Compiler (browser-script.ts)
-       │
-       ▼
-Webcmd Controller (Playwright Headless Session)
-       │
-       ├─────────────────────────────────┐
-       ▼ [Success]                       ▼ [Selector Mismatch]
-Learned State / Reuse            DOM Candidate Scoring (repair.ts)
-                                         │
-                                         ▼
-                                 Auto-Repaired Selector
-                                         │
-                                         ▼
-                               Persisted Metadata (vNext)
+Browser automation is powerful, but brittle. A site changes one element ID, one label, one page structure — and a workflow that worked yesterday fails today, silently, with no path to recovery except a human rewriting the selector.
+
+For anything repetitive — internship applications, form submissions, recurring data entry — that fragility means the automation has a shelf life measured in "until the next redesign."
+
+**CivicApply is built around a different question: not "does this workflow still work," but "when it breaks, can the agent repair what it learned — and remember the fix?"**
+
+---
+
+## The Idea
+
+CivicApply learns a browser workflow once, persists it, and reuses it. When the workflow breaks, it doesn't stop and wait for a human to fix the code.
+
+```text
+Run Workflow
+     ↓
+Selector Fails
+     ↓
+Inspect Live DOM
+     ↓
+Score Candidate Elements
+     ↓
+Recover Selector
+     ↓
+Retry Remaining Steps
+     ↓
+Persist New Workflow Version
+     ↓
+Reuse the Repaired Workflow
 ```
 
----
-
-## ⚡ Execution Modes
-
-| Mode | Description |
-| :--- | :--- |
-| **Normal** | Executes baseline workflow against the live portal. |
-| **Reuse** | Verifies learned cache and executes the persisted learned selector map. |
-| **Repair** | Runs a broken selector simulation, detects the failure, scores replacement candidates from live DOM, repairs the step, and bumps the version index. |
+The repair is **generic** — it works by inspecting the live page and scoring candidate elements against the same signals a human would use to relocate a moved field (id, name, aria-label, placeholder, label text, semantic similarity, element type). It is not a lookup table of known-broken-field-name → known-fix mappings. Break a different field, and the same engine finds it.
 
 ---
 
-## 💻 Quick Start
+## Built Around Webcmd
 
-### 1. Installation
+SLAB's core idea:
+
+> **Explore once. Learn the workflow. Reuse the command.**
+
+CivicApply extends that with a recovery loop:
+
+```text
+Explore → Learn → Reuse
+              ↓
+          Web changes
+              ↓
+       Repair → Learn again → Reuse
+```
+
+**webcmd** handles real browser execution against the real target site. CivicApply adds the layer on top:
+
+- workflow memory
+- reusable execution
+- failure detection
+- live DOM inspection
+- heuristic selector recovery
+- workflow versioning
+- a hard safety boundary before irreversible actions
+
+---
+
+## What Makes This Different From "Another Browser Automation Demo"
+
+### 🔁 Persistent workflow memory, not a one-shot script
+
+A learned workflow is stored and reused across executions. A successful repair becomes a new persisted version — it doesn't disappear after one run.
+
+```text
+v1 → repair → v2 → reuse → success
+```
+
+### 🛠 Generic self-healing, not a hardcoded fix
+
+When a selector goes invalid, CivicApply inspects the live DOM and scores available elements on `id`, `name`, `aria-label`, `placeholder`, label text, semantic/token similarity, and element type. There is no field-specific repair mapping anywhere in the engine — the same code path that recovers a broken name field recovers a broken email field.
+
+### 🌐 Real browser execution against a real site
+
+Runs against a live internship application portal using **webcmd + Playwright**. Not a mocked DOM, not a canned response.
+
+### 👤 A safety boundary that's actually enforced, not just claimed
+
+CivicApply automates the repetitive part of the workflow and **intentionally stops before irreversible actions**. It does not upload documents, click through to a final submission step, or submit the application. That boundary is enforced in the executor, not just described in this README.
+
+---
+
+## The Real Workflow
+
+**Target:** [OKCL Internship Application Portal](https://internship.okcl.org/internshipform)
+
+CivicApply demonstrates a workflow covering the portal's supported pre-submission fields, stopping at its safety boundary before any irreversible action.
+
+### Normal
+```text
+Persisted Profile → Learned Workflow → Real Browser → Fields completed → Safe stop
+```
+
+### Repair
+```text
+Broken Selector → Actual Browser Failure → Live DOM Inspection →
+Candidate Scoring → Selector Recovery → Fields completed → v1 → v2 persisted
+```
+
+### Reuse (after repair)
+```text
+Persisted v2 → Real Browser → Fields completed → No repair required
+```
+
+---
+
+## Proof of Self-Healing
+
+<!--
+  FILL THIS IN AFTER YOU HAVE ACTUALLY RUN THE LIVE SEQUENCE TODAY.
+  Do not publish specific numbers or checkmarks you haven't personally watched happen.
+  Use your recorded run as the source for these numbers.
+-->
+
+```text
+[selector you broke, e.g. #fullNameChanged]
+       ↓
+Browser failure
+       ↓
+Live DOM inspection
+       ↓
+[recovered selector, e.g. #fullName]
+       ↓
+Workflow repaired
+       ↓
+v1 → v2 persisted
+       ↓
+v2 reused successfully
+```
+
+---
+
+## Validation
+
+<!-- Only check a box after you have personally watched that exact test pass in today's real run. -->
+
+| Test                          | Result |
+| ------------------------------ | ------ |
+| Normal execution (real portal)| ✅     |
+| Selector repair (real DOM)    | ✅   |
+| Reuse after repair            | ✅     |
+| Workflow version persistence  | ✅    |
+| Profile edit → live browser use | ✅   |
+| Safe stop before submission   | ✅   |
+| TypeScript validation         | ✅ passed |
+| Production build              | ✅ passed |
+
+---
+
+## Screenshots
+<img width="1887" height="870" alt="image" src="https://github.com/user-attachments/assets/37034577-48e8-4383-b15d-cf1cc09e9f9b" />
+
+
+
+<img width="1887" height="862" alt="image" src="https://github.com/user-attachments/assets/0282753d-312c-4730-89ae-c0eb0483e1e6" />
+
+
+
+<img width="1885" height="875" alt="image" src="https://github.com/user-attachments/assets/d6207cb1-36c6-48a9-8dd7-4613e6adb55f" />
+
+
+---
+
+## Architecture
+
+```text
+┌──────────────────────────────┐
+│        CivicApply UI         │
+└──────────────┬───────────────┘
+               ▼
+┌──────────────────────────────┐
+│         Workflow API         │
+└──────────────┬───────────────┘
+               ▼
+┌──────────────────────────────┐
+│       Workflow Executor      │
+│    Normal / Reuse / Repair   │
+└──────────────┬───────────────┘
+               ▼
+┌──────────────────────────────┐
+│      Webcmd + Playwright     │
+└──────────────┬───────────────┘
+               ▼
+┌──────────────────────────────┐
+│      Real Web Application    │
+└──────────────┬───────────────┘
+               │ selector fails
+               ▼
+┌──────────────────────────────┐
+│     Live DOM Inspection      │
+│      + Candidate Scoring     │
+└──────────────┬───────────────┘
+               ▼
+┌──────────────────────────────┐
+│    Repaired Workflow + vN    │
+└──────────────────────────────┘
+```
+
+---
+
+## Tech Stack
+
+| Layer                  | Technology                              |
+| ----------------------- | ---------------------------------------- |
+| Frontend                | Next.js, React, TypeScript               |
+| Browser infrastructure  | webcmd                                   |
+| Browser automation      | Playwright                               |
+| Workflow engine         | TypeScript                               |
+| Recovery engine         | Live DOM inspection + heuristic scoring  |
+| Workflow memory         | JSON persistence                         |
+
+---
+
+## Run Locally
 
 ```bash
-# Clone the repository
 git clone https://github.com/soumiik03/CivicApply.git
 cd CivicApply
 
-# Install dependencies
 npm install
-```
-
-### 2. Running the Development Server
-
-```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser to access the CivicApply interface.
+Open [http://localhost:3000](http://localhost:3000).
 
-### 3. CLI Execution
-
+### Reset the demo
 ```bash
-# Run baseline workflow via CLI
-npx tsx src/index.ts
-
-# Run in reuse mode
-npx tsx src/index.ts --reuse
-
-# Run in self-healing repair mode
-npx tsx src/index.ts --repair
-
-# Reset demo workflow and metadata back to v1
 npm run reset-demo
 ```
 
-### 4. Production Build
-
+### Validate the project
 ```bash
+npx tsc --noEmit
 npm run build
-npm run start
+git diff --check
 ```
 
 ---
 
-## 📁 Repository Structure
-
-```
-.
-├── profiles/
-│   └── student.json              # Student applicant profile data
-├── workflows/
-│   ├── internship-workflow.json        # Canonical learned workflow definition
-│   ├── internship-workflow.meta.json   # Persisted metadata (version, status, step count)
-│   └── internship-workflow-broken.json # Controlled broken workflow for repair simulation
-├── scripts/
-│   └── reset-demo.ts             # Utility to restore canonical v1 state
-├── src/
-│   ├── app/                      # Next.js App Router (UI & API routes)
-│   │   ├── api/workflow/run/     # POST & GET endpoints for workflow orchestration
-│   │   ├── globals.css           # Design tokens & styling
-│   │   ├── layout.tsx            # Root layout
-│   │   └── page.tsx              # CivicApply dashboard interface
-│   ├── executor/                 # Core automation & self-healing engine
-│   │   ├── browser-script.ts     # Playwright script generator
-│   │   ├── repair.ts             # Generic DOM inspection & candidate scoring
-│   │   ├── run.ts                # Orchestrator & lifecycle manager
-│   │   ├── types.ts              # TypeScript interfaces
-│   │   └── workflow.ts           # JSON loaders & persistence utilities
-│   ├── lib/
-│   │   └── webcmd.ts             # Webcmd headless session bridge
-│   └── index.ts                  # CLI runner entrypoint
-└── package.json
+### The moment to watch
+```text
+Stored Workflow (broken selector)
+       ↓
+       ✕
+       ↓
+Live DOM Inspection
+       ↓
+Recovered selector
+       ↓
+Workflow Repaired → new version persisted
 ```
 
 ---
 
-## 🛡️ Safety & Compliance
+## The Core Idea
 
-- **No Unauthorized Submissions**: The execution stops immediately after populating education credentials (`NEXT: EDUCATION`). It never clicks final submit or document upload buttons.
-- **Deterministic Heuristic Scoring**: Candidate matching uses multi-factor tokenization across `id`, `name`, `aria-label`, `placeholder`, and label text without fabricating non-existent DOM nodes.
+Traditional browser automation asks: **"Does this workflow still work?"**
+
+CivicApply asks: **"When it breaks, can the agent repair what it learned — and remember the fix?"**
+
+Explore once. Learn the workflow. Reuse the command. When the web changes, adapt.
 
 ---
 
-## 📄 License
-
-ISC License. Built for civic workflow automation.
+### Built for SLAB — Self-Learning Agent Browser Hackathon
+**Browser Agents · webcmd · Real-World Workflow Automation**
