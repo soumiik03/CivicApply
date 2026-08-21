@@ -4,10 +4,6 @@
 
 Built for **SLAB — Self-Learning Agent Browser Hackathon** with **webcmd**, Playwright, Next.js, and TypeScript.
 
-[![Next.js](https://img.shields.io/badge/Next.js-black?logo=next.js)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Playwright](https://img.shields.io/badge/Playwright-2EAD33?logo=playwright&logoColor=white)](https://playwright.dev/)
-[![webcmd](https://img.shields.io/badge/Powered%20by-webcmd-6C47FF)](#)
 
 ---
 
