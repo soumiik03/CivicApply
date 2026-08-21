@@ -19,6 +19,20 @@ export interface RunWorkflowOptions {
     autoRepair?: boolean;
     checkReuse?: boolean;
     isCLI?: boolean;
+    keepBrowser?: boolean;
+}
+
+let retainedSessionId: string | null = null;
+
+export function closeRetainedBrowserSession(): boolean {
+    if (!retainedSessionId) return false;
+    closeSession(retainedSessionId);
+    retainedSessionId = null;
+    return true;
+}
+
+export function hasRetainedBrowserSession(): boolean {
+    return retainedSessionId !== null;
 }
 
 function workflowIdentity(workflowPath: string, metaPath: string) {
@@ -43,6 +57,7 @@ export function runWorkflow(options: RunWorkflowOptions): WorkflowExecutionResul
         status,
         workflow: identity,
         execution: { durationMs: Date.now() - startedAt, stepsCompleted },
+        browser: { retained: false },
         safety: { submissionTriggered: false },
         ...(error ? { error } : {})
     });
@@ -62,8 +77,19 @@ export function runWorkflow(options: RunWorkflowOptions): WorkflowExecutionResul
         return base(false, "failed", 0, "No workflow steps to execute.");
     }
 
+    const unsafeStep = workflow.steps.find((step) => {
+        const target = `${step.action} ${step.selector || ""}`.toLowerCase();
+        return target.includes("submit") || target.includes("final") || target.includes("document") || target.includes("upload");
+    });
+    if (unsafeStep) {
+        return base(false, "failed", 0, "Safety boundary blocked an irreversible submission or document action.");
+    }
+
     let sessionId: string | null = null;
+    let retainSession = false;
+    let executionSucceeded = false;
     try {
+        closeRetainedBrowserSession();
         sessionId = createSession();
         const result = JSON.parse(runBrowserScript(sessionId, buildBrowserScript(workflow.steps, options.variables)));
 
@@ -73,23 +99,32 @@ export function runWorkflow(options: RunWorkflowOptions): WorkflowExecutionResul
 
         const browserResult = result.result;
         if (browserResult?.success === true) {
-            return base(true, "completed", browserResult.stepsCompleted ?? workflow.steps.length);
+            executionSucceeded = true;
+            retainSession = options.keepBrowser === true;
+            return {
+                ...base(true, "completed", browserResult.stepsCompleted ?? workflow.steps.length),
+                browser: { retained: retainSession }
+            };
         }
 
         const failedStep = browserResult?.failedStep;
         const failedStepIndex = typeof browserResult?.failedStepIndex === "number" ? browserResult.failedStepIndex : 0;
         const failureError = browserResult?.error?.split("\n")[0] || "Workflow failed";
+        const failedStepDetails = failedStep
+            ? ` (step ${failedStepIndex}: ${failedStep.action}${failedStep.selector ? ` ${failedStep.selector}` : ""}${failedStep.value !== undefined ? ` value=${JSON.stringify(failedStep.value)}` : ""})`
+            : "";
 
         if (!options.autoRepair || !failedStep?.selector) {
-            return base(false, "failed", browserResult?.stepsCompleted ?? failedStepIndex, failureError);
+            return base(false, "failed", browserResult?.stepsCompleted ?? failedStepIndex, `${failureError}${failedStepDetails}`);
         }
 
         const domElements = inspectDOM(sessionId);
         const repairedSelector = repairFailedStep(failedStep, domElements);
+        const oldSelector = failedStep.selector;
         if (!repairedSelector) {
             return {
                 ...base(false, "failed", browserResult?.stepsCompleted ?? failedStepIndex, "Could not find a matching replacement selector on the page"),
-                repair: { attempted: true, repaired: false, oldSelector: failedStep.selector }
+                repair: { attempted: true, repaired: false, oldSelector }
             };
         }
 
@@ -101,7 +136,7 @@ export function runWorkflow(options: RunWorkflowOptions): WorkflowExecutionResul
         if (!retryResult.ok || retryResult.result?.success !== true) {
             return {
                 ...base(false, "failed", retryResult.result?.stepsCompleted ?? failedStepIndex, "Repair attempt failed to execute remaining steps"),
-                repair: { attempted: true, repaired: false, oldSelector: failedStep.selector, newSelector: repairedSelector }
+                repair: { attempted: true, repaired: false, oldSelector, newSelector: repairedSelector }
             };
         }
 
@@ -120,13 +155,16 @@ export function runWorkflow(options: RunWorkflowOptions): WorkflowExecutionResul
         saveWorkflow(workflow, learnedWorkflowPath);
         saveWorkflowMeta(currentMeta, metaPath);
 
+        executionSucceeded = true;
+        retainSession = options.keepBrowser === true;
         return {
             ...base(true, "repaired", workflow.steps.length),
+            browser: { retained: retainSession },
             workflow: { name: currentMeta.name || workflow.name || "workflow", version: newVersion },
             repair: {
                 attempted: true,
                 repaired: true,
-                oldSelector: failedStep.selector,
+                oldSelector,
                 newSelector: repairedSelector,
                 previousVersion,
                 newVersion
@@ -135,6 +173,12 @@ export function runWorkflow(options: RunWorkflowOptions): WorkflowExecutionResul
     } catch (err) {
         return base(false, "failed", 0, err instanceof Error ? err.message : String(err));
     } finally {
-        if (sessionId) closeSession(sessionId);
+        if (sessionId) {
+            if (executionSucceeded && retainSession) {
+                retainedSessionId = sessionId;
+            } else {
+                closeSession(sessionId);
+            }
+        }
     }
 }

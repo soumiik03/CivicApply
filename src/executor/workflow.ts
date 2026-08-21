@@ -64,3 +64,7 @@ export function loadProfile(profilePath: string = "profiles/student.json"): Reco
     }
     return {};
 }
+
+export function saveProfile(profile: Record<string, string>, profilePath: string = "profiles/student.json"): void {
+    fs.writeFileSync(profilePath, JSON.stringify(profile, null, 2) + "\n", "utf8");
+}

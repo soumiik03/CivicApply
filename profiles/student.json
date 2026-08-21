@@ -1,11 +1,11 @@
 {
   "username": "tomsmith",
   "password": "SuperSecretPassword!",
-  "firstName": "Tom",
-  "lastName": "Smith",
-  "fullName": "Tom Smith",
+  "firstName": "Test",
+  "lastName": "Applicant",
+  "fullName": "CivicFlow Runtime Check",
   "email": "tomsmith@example.com",
-  "phone": "9876543210",
+  "phone": "12345678",
   "gender": "Male",
   "district": "Khurda",
   "block": "Bhubaneswar",
@@ -13,10 +13,10 @@
   "university": "Biju Patnaik University of Technology Rourkela Odisha(BPUT)",
   "college": "Others",
   "universityRegNo": "TEST123456",
-  "course": "B.Tech (Bachelor of Technology)",
+  "course": "B.Tech",
   "specialization": "Computer Science and Engineering",
   "currentSemester": "1st Semester",
   "admissionMonth": "August",
-  "admissionYear": "2025",
+  "admissionYear": "2024",
   "educationStatus": "Currently Pursuing"
 }

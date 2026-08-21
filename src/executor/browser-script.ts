@@ -25,6 +25,25 @@ export function buildBrowserScript(
         `let __currentStepIndex = 0;`
     );
 
+    lines.push(`const __selectOption = async (selector, desired) => {
+      await page.locator(selector).waitFor({ state: 'attached', timeout: 3000 });
+      const optionValue = await page.locator(selector).evaluate((element, value) => {
+        const normalize = (text) => String(text).toLowerCase().replace(/[^a-z0-9]/g, '');
+        const wanted = normalize(value);
+        const options = Array.from(element.options);
+        const match = options.find((option) => {
+          const optionValue = normalize(option.value);
+          const optionText = normalize(option.textContent || '');
+          return optionValue === wanted || optionText === wanted || optionText.startsWith(wanted) || wanted.startsWith(optionText);
+        });
+        if (!match) {
+          throw new Error('No select option matched ' + JSON.stringify(value) + '. Available options: ' + options.map((option) => JSON.stringify(option.textContent?.trim() || option.value)).join(', '));
+        }
+        return match.value;
+      }, desired);
+      await page.locator(selector).selectOption({ value: optionValue }, { timeout: 3000 });
+    };`);
+
     lines.push(`try {`);
 
     for (let i = 0; i < steps.length; i++) {
@@ -97,11 +116,9 @@ export function buildBrowserScript(
             );
 
             lines.push(
-                `  await page.locator(${JSON.stringify(
+                `  await __selectOption(${JSON.stringify(
                     step.selector
-                )}).selectOption({ label: ${JSON.stringify(
-                    value
-                )} }, { timeout: 3000 });`
+                )}, ${JSON.stringify(value)});`
             );
         }
 

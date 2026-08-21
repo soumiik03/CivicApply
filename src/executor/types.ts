@@ -18,6 +18,7 @@ export interface WorkflowExecutionResult {
     status: WorkflowExecutionStatus;
     workflow: { name: string; version: number };
     execution: { durationMs: number; stepsCompleted: number };
+    browser?: { retained: boolean };
     repair?: RepairResult;
     safety: { submissionTriggered: false };
     error?: string;
