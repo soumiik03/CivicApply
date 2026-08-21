@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import type { WorkflowExecutionResult, WorkflowMode } from "../executor/types";
+import { mockRepair } from "../data/mockRepair";
+import FailureRepairPanel from "../components/FailureRepairPanel";
 
 interface DashboardData {
   workflow: {
@@ -31,6 +33,28 @@ export default function HomePage() {
   const [clientError, setClientError] = useState<string | null>(null);
   const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [repairStep, setRepairStep] = useState(0);
+  const [hasRunRepair, setHasRunRepair] = useState(false);
+
+  const simulateRepair = () => {
+    setRepairStep(1);
+
+    setTimeout(() => {
+      setRepairStep(2);
+    }, 1000);
+
+    setTimeout(() => {
+      setRepairStep(3);
+    }, 2000);
+
+    setTimeout(() => {
+      setRepairStep(4);
+    }, 3000);
+
+    setTimeout(() => {
+      setRepairStep(5);
+    }, 4000);
+  };
 
   useEffect(() => {
     fetch("/api/workflow/run")
@@ -46,6 +70,11 @@ export default function HomePage() {
     setState("running");
     setResponse(null);
     setClientError(null);
+    setRepairStep(0);
+    if (mode === "repair") {
+      setHasRunRepair(true);
+      simulateRepair();
+    }
     try {
       const result = await fetch("/api/workflow/run", {
         method: "POST",
@@ -122,6 +151,15 @@ export default function HomePage() {
           <div className="tech-details-wrap"><button type="button" className="tech-toggle-btn" onClick={() => setShowTechnicalDetails((value) => !value)}><span>{showTechnicalDetails ? "▼" : "▶"} Technical details</span><span>POST /api/workflow/run</span></button>{showTechnicalDetails && <div className="tech-content"><button type="button" className="copy-btn" onClick={copyResponse}>{copied ? "Copied" : "Copy JSON"}</button><div className="tech-json-viewer"><pre>{response ? JSON.stringify(response, null, 2) : "No execution response yet."}</pre></div></div>}</div>
         </section></div>
       </div>
+
+      {/* CHAPTER 3 - FAILURE & REPAIR */}
+
+      {mode === "repair" && hasRunRepair && (
+        <FailureRepairPanel
+          repairStep={repairStep}
+          data={mockRepair}
+        />
+      )}
     </main>
   );
 }
