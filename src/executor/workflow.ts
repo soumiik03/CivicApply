@@ -9,6 +9,7 @@ export interface WorkflowStep {
 
 export interface Workflow {
     name?: string;
+    url?: string;
     steps: WorkflowStep[];
 }
 
@@ -45,6 +46,13 @@ export function saveWorkflowMeta(
     metaPath: string = "workflows/internship-workflow.meta.json"
 ): void {
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2) + "\n", "utf8");
+}
+
+export function saveWorkflow(
+    workflow: Workflow,
+    workflowPath: string = "workflows/internship-workflow.json"
+): void {
+    fs.writeFileSync(workflowPath, JSON.stringify(workflow, null, 2) + "\n", "utf8");
 }
 
 export function loadProfile(profilePath: string = "profiles/student.json"): Record<string, string> {

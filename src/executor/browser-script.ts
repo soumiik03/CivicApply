@@ -60,11 +60,12 @@ export function buildBrowserScript(steps: WorkflowStep[], variables: Record<stri
         }
     }
 
-    lines.push(`  return { success: true };`);
+    lines.push(`  return { success: true, stepsCompleted: __steps.length };`);
     lines.push(`} catch (err) {`);
     lines.push(`  return {`);
     lines.push(`    success: false,`);
     lines.push(`    failedStepIndex: __currentStepIndex,`);
+    lines.push(`    stepsCompleted: __currentStepIndex,`);
     lines.push(`    failedStep: __steps[__currentStepIndex],`);
     lines.push(`    error: err instanceof Error ? err.message : String(err)`);
     lines.push(`  };`);

@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "CivicFlow | CivicApply Automation",
-  description: "AI-powered web automation and self-healing workflow orchestrator",
+  description: "Browser workflow automation with heuristic DOM selector repair",
 };
 
 export default function RootLayout({

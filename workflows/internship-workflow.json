@@ -1,98 +1,98 @@
 {
-    "name": "internship",
-    "url": "https://internship.okcl.org/internshipform",
-    "steps": [
-        {
-            "action": "navigate",
-            "url": "https://internship.okcl.org/internshipform"
-        },
-        {
-            "action": "fill",
-            "selector": "#fullName",
-            "value": "{{fullName}}"
-        },
-        {
-            "action": "fill",
-            "selector": "#email",
-            "value": "{{email}}"
-        },
-        {
-            "action": "fill",
-            "selector": "#phone",
-            "value": "{{phone}}"
-        },
-        {
-            "action": "select",
-            "selector": "#gender",
-            "value": "{{gender}}"
-        },
-        {
-            "action": "select",
-            "selector": "#district",
-            "value": "{{district}}"
-        },
-        {
-            "action": "waitForOptions",
-            "selector": "#block"
-        },
-        {
-            "action": "select",
-            "selector": "#block",
-            "value": "{{block}}"
-        },
-        {
-            "action": "fill",
-            "selector": "#address",
-            "value": "{{address}}"
-        },
-        {
-            "action": "click",
-            "selector": "button:has-text(\"NEXT: EDUCATION\")"
-        },
-        {
-            "action": "select",
-            "selector": "#university",
-            "value": "{{university}}"
-        },
-        {
-            "action": "select",
-            "selector": "#college",
-            "value": "{{college}}"
-        },
-        {
-            "action": "fill",
-            "selector": "#universityRegNo",
-            "value": "{{universityRegNo}}"
-        },
-        {
-            "action": "select",
-            "selector": "#course",
-            "value": "{{course}}"
-        },
-        {
-            "action": "fill",
-            "selector": "#specialization",
-            "value": "{{specialization}}"
-        },
-        {
-            "action": "select",
-            "selector": "#currentSemester",
-            "value": "{{currentSemester}}"
-        },
-        {
-            "action": "select",
-            "selector": "#admissionMonth",
-            "value": "{{admissionMonth}}"
-        },
-        {
-            "action": "select",
-            "selector": "#admissionYear",
-            "value": "{{admissionYear}}"
-        },
-        {
-            "action": "select",
-            "selector": "#educationStatus",
-            "value": "{{educationStatus}}"
-        }
-    ]
+  "name": "internship",
+  "url": "https://internship.okcl.org/internshipform",
+  "steps": [
+    {
+      "action": "navigate",
+      "url": "https://internship.okcl.org/internshipform"
+    },
+    {
+      "action": "fill",
+      "selector": "#fullName",
+      "value": "{{fullName}}"
+    },
+    {
+      "action": "fill",
+      "selector": "#email",
+      "value": "{{email}}"
+    },
+    {
+      "action": "fill",
+      "selector": "#phone",
+      "value": "{{phone}}"
+    },
+    {
+      "action": "select",
+      "selector": "#gender",
+      "value": "{{gender}}"
+    },
+    {
+      "action": "select",
+      "selector": "#district",
+      "value": "{{district}}"
+    },
+    {
+      "action": "waitForOptions",
+      "selector": "#block"
+    },
+    {
+      "action": "select",
+      "selector": "#block",
+      "value": "{{block}}"
+    },
+    {
+      "action": "fill",
+      "selector": "#address",
+      "value": "{{address}}"
+    },
+    {
+      "action": "click",
+      "selector": "button:has-text(\"NEXT: EDUCATION\")"
+    },
+    {
+      "action": "select",
+      "selector": "#university",
+      "value": "{{university}}"
+    },
+    {
+      "action": "select",
+      "selector": "#college",
+      "value": "{{college}}"
+    },
+    {
+      "action": "fill",
+      "selector": "#universityRegNo",
+      "value": "{{universityRegNo}}"
+    },
+    {
+      "action": "select",
+      "selector": "#course",
+      "value": "{{course}}"
+    },
+    {
+      "action": "fill",
+      "selector": "#specialization",
+      "value": "{{specialization}}"
+    },
+    {
+      "action": "select",
+      "selector": "#currentSemester",
+      "value": "{{currentSemester}}"
+    },
+    {
+      "action": "select",
+      "selector": "#admissionMonth",
+      "value": "{{admissionMonth}}"
+    },
+    {
+      "action": "select",
+      "selector": "#admissionYear",
+      "value": "{{admissionYear}}"
+    },
+    {
+      "action": "select",
+      "selector": "#educationStatus",
+      "value": "{{educationStatus}}"
+    }
+  ]
 }

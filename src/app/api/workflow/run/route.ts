@@ -1,9 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { runWorkflow } from "../../../../executor/run";
-import { loadProfile } from "../../../../executor/workflow";
+import { loadProfile, loadWorkflow, loadWorkflowMeta } from "../../../../executor/workflow";
+import { WorkflowExecutionResult } from "../../../../executor/types";
 
 export interface WorkflowRequestBody {
     mode?: "normal" | "reuse" | "repair";
+}
+
+export async function GET() {
+    const workflow = loadWorkflow("workflows/internship-workflow.json");
+    const metadata = loadWorkflowMeta("workflows/internship-workflow.meta.json");
+    const profile = loadProfile("profiles/student.json");
+
+    return NextResponse.json({
+        workflow: {
+            name: metadata?.name || workflow.name || "workflow",
+            site: metadata?.site || workflow.url || null,
+            url: workflow.url || null,
+            version: metadata?.version ?? 1,
+            status: metadata?.status || "unknown",
+            steps: metadata?.steps ?? workflow.steps.length
+        },
+        profile
+    });
 }
 
 export async function POST(req: NextRequest) {
@@ -37,27 +56,24 @@ export async function POST(req: NextRequest) {
 
         const profile = loadProfile("profiles/student.json");
 
-        const result = runWorkflow({
+        const result: WorkflowExecutionResult = runWorkflow({
             variables: profile,
+            mode,
             workflowPath,
+            learnedWorkflowPath: "workflows/internship-workflow.json",
             autoRepair: isRepair,
             checkReuse: isReuse,
             isCLI: false
         });
 
-        return NextResponse.json({
-            success: result.success,
-            mode,
-            status: result.status,
-            version: result.version,
-            ...(result.error ? { error: result.error } : {})
-        });
+        return NextResponse.json(result, { status: result.success ? 200 : 500 });
     } catch (err) {
         return NextResponse.json(
             {
                 success: false,
-                mode: "unknown",
-                status: "error",
+                mode: "normal",
+                status: "failed",
+                safety: { submissionTriggered: false },
                 error: err instanceof Error ? err.message : String(err)
             },
             { status: 500 }
